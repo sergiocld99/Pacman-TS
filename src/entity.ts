@@ -1,3 +1,4 @@
+import CellType from "./cellType.js"
 import Direction from "./direction.js"
 
 const Entity = class {
@@ -106,6 +107,10 @@ const Entity = class {
     checkTunnel(boardWidth: number){
         if (this.x >= boardWidth-1) this.x = 0
         else if (this.x <= 0) this.x = boardWidth-1
+    }
+
+    canMoveOn(cellType: CellType): boolean {
+        return cellType != CellType.Wall
     }
 }
 

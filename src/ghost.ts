@@ -1,8 +1,8 @@
 import Entity from "./entity.js"
 import Direction from "./direction.js"
 import Board from "./board.js"
-import CellType from "./cellType.js"
 import Pacman from "./pacman.js"
+import ImgRepo from "./imgRepo.js"
 
 const enum GhostStatus{ Normal, Vulnerable, Eaten }
 
@@ -16,7 +16,7 @@ export default class Ghost extends Entity {
     pacman: Pacman
 
     constructor(id: number, board: Board, pacman: Pacman){
-        super([11+id+(id>1 ? 2:0), 14, id%3 ? 0:3])
+        super([11+id+(id>1 ? 2:0), 14, id % 3 ? Direction.UP : Direction.DOWN])
         this.id = id
         this.bounces = 0
         this.bounceLimit = 5 * (this.id + 1)
@@ -142,18 +142,18 @@ export default class Ghost extends Entity {
     canMoveTo(x:number,y:number): boolean{
         const x_try = super.fixX(x)
         const y_try = super.fixY(y)
-        let ok = this.isValidCell(x_try, y_try)
 
         // check tunnel
         super.checkTunnel(this.board.width)
 
+        let ok = this.isValidCell(x_try, y_try)
         if (!ok) this.bounces++
         return ok
     }
 
     isValidCell(x: number, y: number): boolean {
         const cell = this.board.matrix[y][x]
-        return cell != CellType.Wall
+        return super.canMoveOn(cell)
     }
 
     rotateTowardsHouse(){
@@ -226,10 +226,10 @@ export default class Ghost extends Entity {
 
     // ---- DRAWING METHODS ---------------
 
-    draw(ctx: CanvasRenderingContext2D, imgSize: number, src: HTMLImageElement, cellSize: number){
+    draw(ctx: CanvasRenderingContext2D, imgSize: number, imgRepo: ImgRepo){
         switch(this.status){
             case GhostStatus.Normal:
-                this.drawNormal(ctx,imgSize,src,cellSize)
+                this.drawNormal(ctx,imgSize,imgRepo)
                 break
             case GhostStatus.Vulnerable:
                 break
@@ -238,10 +238,11 @@ export default class Ghost extends Entity {
         }
     }
 
-    drawNormal(ctx: CanvasRenderingContext2D, imgSize: number, src: HTMLImageElement, cellSize: number){
+    drawNormal(ctx: CanvasRenderingContext2D, imgSize: number, imgRepo: ImgRepo){
         const sw = imgSize
         const sh = imgSize
         const internalSize = 96
+        const cellSize = this.board.cellSize
         let sx, sy
 
         switch(this.direction){
@@ -263,7 +264,7 @@ export default class Ghost extends Entity {
                 break
         }
 
-        ctx.drawImage(src, sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
+        ctx.drawImage(imgRepo.ghostImgs[this.id], sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
     }
 }
 
