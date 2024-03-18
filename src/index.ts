@@ -1,6 +1,8 @@
 // import
 import Board from "./board.js"
+import Ghost from "./ghost.js"
 import Match from "./match.js"
+import Pacman from "./pacman.js"
 
 // alias
 type Img = HTMLImageElement
@@ -28,6 +30,10 @@ const scoreTxt = document.getElementById("score_txt") as HTMLParagraphElement
 // objects
 const match = new Match(2, 1, 2000)
 const board = new Board(28, 31, 20, 20/6, 0.25)
+const pacman = new Pacman()
+const ghosts: Ghost[] = Array(4)
+
+for (let i=0; i<ghosts.length; i++) ghosts[i] = new Ghost(i%ghostImgs.length, board, pacman)
 
 // game
 const setup = () => {
@@ -50,10 +56,14 @@ const loop = () => {
     if (canvasCtx){
         canvasCtx.clearRect(0,0,canvas.width, canvas.height)
         board.draw(canvasCtx)
+        ghosts.forEach((g, i) => g.draw(canvasCtx, 100, ghostImgs[i], board.cellSize))
     }
 
     if (match.isPlaying()){
-
+        ghosts.forEach(g => {
+            g.moveIfTicks(2)
+            // console.log(g.x, g.y)
+        })
     } else {
 
     }

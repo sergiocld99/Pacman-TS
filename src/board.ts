@@ -1,8 +1,6 @@
-const enum CellType { 
-    Wall, Space, Food, BigFood, GhostHouse
-}
+import CellType from "./cellType.js"
 
-const Board = class {
+export default class Board {
     width: number
     height: number
     cellSize: number
@@ -202,5 +200,3 @@ const Board = class {
         ctx.fill()
     }
 }
-
-export default Board
