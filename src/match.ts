@@ -6,7 +6,7 @@ const enum MatchStatus {
     Losing
 }
 
-const Match = class {
+export default class Match {
     maxLives: number
     initialLevel: number
     levelCompletedAnimationDuration: number
@@ -56,5 +56,3 @@ const Match = class {
         return this.status === MatchStatus.Playing
     }
 }
-
-export default Match

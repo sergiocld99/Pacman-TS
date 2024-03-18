@@ -1,5 +1,6 @@
 // import
 import Board from "./board.js"
+import CellType from "./cellType.js"
 import Direction from "./direction.js"
 import Ghost from "./ghost.js"
 import ImgRepo from "./imgRepo.js"
@@ -19,7 +20,7 @@ const scoreTxt = document.getElementById("score_txt") as HTMLParagraphElement
 const imgRepo = new ImgRepo(document)
 const match = new Match(2, 1, 2000)
 const board = new Board(28, 31, 20, 20/6, 0.25)
-const pacman = new Pacman(board)
+const pacman = new Pacman(board, match)
 const ghosts: Ghost[] = Array(4)
 
 for (let i=0; i<ghosts.length; i++) ghosts[i] = new Ghost(i%4, board, pacman)
@@ -54,7 +55,7 @@ const loop = () => {
     }
 
     if (match.isPlaying()){
-        ghosts.forEach(g => g.moveIfTicks(2))
+        ghosts.forEach(g => g.moveIfTicks(3))
         pacman.moveAuto()
     } else {
 

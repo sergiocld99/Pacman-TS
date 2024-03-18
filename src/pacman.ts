@@ -3,14 +3,17 @@ import CellType from "./cellType.js";
 import Direction from "./direction.js";
 import Entity from "./entity.js";
 import ImgRepo from "./imgRepo.js";
+import Match from "./match.js";
 
 export default class Pacman extends Entity {
     board: Board
+    match: Match
     movableTick: number
 
-    constructor(board: Board){
+    constructor(board: Board, match: Match){
         super([board.width / 2 - 1, board.height-8, Direction.RIGHT])
         this.board = board
+        this.match = match
         this.movableTick = 0
     }
 
@@ -24,11 +27,21 @@ export default class Pacman extends Entity {
 
     isValidCell(x: number, y: number): boolean {
         let cell = this.board.matrix[y][x]
+        
+        if (cell === CellType.Food) {
+            this.board.matrix[y][x] = CellType.Space
+            this.board.foodCount -= 1
+            this.match.score += 10
+        } else if (cell === CellType.BigFood){
+            this.board.matrix[y][x] = CellType.Space
+            this.board.foodCount -= 1
+        }
+        
         return super.canMoveOn(cell) && cell != CellType.GhostHouse
     }
 
     moveAuto(){
-        if (++this.movableTick < 2) return
+        if (++this.movableTick < 3) return
         this.movableTick = 0
 
         switch(this.direction){
