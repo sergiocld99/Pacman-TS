@@ -1,3 +1,5 @@
+import SFX from "./sfx.js"
+
 const enum MatchStatus { 
     Starting, 
     Playing, 
@@ -12,10 +14,11 @@ export default class Match {
     levelCompletedAnimationDuration: number
     level: number
     lives: number
+    ghostsEaten: number
     status: MatchStatus
+    sfx: SFX
     score: number
-    siren: HTMLAudioElement | null
-    sirenIntervalId: number | null
+    
 
     constructor(maxLives: number, initialLevel: number, levelCompletedDelay: number) {
         this.maxLives = maxLives
@@ -23,33 +26,21 @@ export default class Match {
         this.levelCompletedAnimationDuration = levelCompletedDelay
         this.level = this.initialLevel
         this.lives = this.maxLives
+        this.ghostsEaten = 0
         this.status = MatchStatus.Starting
+        this.sfx = new SFX()
         this.score = 2440 * (this.level - 1)
-        this.siren = null
-        this.sirenIntervalId = null
     }
 
     start () {
         this.status = MatchStatus.Starting
-        new Audio("sounds/start.mp3").play()
+        this.sfx.playStarting()
 
         setTimeout(() => {
             this.status = MatchStatus.Playing
-            this.startGhostSiren()
+            this.sfx.sirenEnabled = true
+            this.sfx.startGhostSiren()
         }, 4000)
-    }
-
-    startGhostSiren () {
-        this.playGhostSiren()
-        if (this.sirenIntervalId) clearInterval(this.sirenIntervalId)
-        this.sirenIntervalId = window.setInterval(() => this.playGhostSiren(), 2760)
-    }
-
-    playGhostSiren () {
-        if (this.isPlaying()){
-            this.siren = new Audio("sounds/ghosts.mp3")
-            this.siren.play()
-        }
     }
 
     isPlaying () : boolean {
@@ -60,20 +51,47 @@ export default class Match {
         return this.status === MatchStatus.Losing
     }
 
-    loseLive() {
+    loseLive(animDuration: number) {
         this.status = MatchStatus.Losing
-
-        let sound = new Audio("sounds/lose.mp3")
-        sound.volume = 0.5
-        sound.play()
+        this.sfx.sirenEnabled = false
+        this.sfx.stopSiren()
+        this.sfx.playLose()
 
         setTimeout(() => {
             this.lives--
 
             if (this.lives >= 0) {
                 this.status = MatchStatus.Playing
-                //this.startGhostSiren()
+                this.sfx.sirenEnabled = true
+                this.sfx.startGhostSiren()
             }
-        }, 2000)
+        }, animDuration)
+    }
+
+    eatGhost(animDuration: number){
+        this.ghostsEaten++
+        this.addScore(Math.pow(2, this.ghostsEaten) * 100)
+        this.status = MatchStatus.EatingGhost
+        this.sfx.playEatGhost()
+
+        setTimeout(() => {
+            this.status = MatchStatus.Playing
+        }, animDuration);
+    }
+
+    addScore(diff: number){
+        let prev = this.score
+        this.score += diff
+
+        // extra life at 10K 
+        if (this.score >= 10_000 && prev < 10_000)
+            this.lives++
+    }
+
+    nextLevel(){
+        this.status = MatchStatus.LevelCompleted
+        this.sfx.sirenEnabled = false
+        this.sfx.ghostsVulnerable = false
+        this.sfx.stopSiren()
     }
 }

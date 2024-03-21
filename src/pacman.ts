@@ -37,11 +37,14 @@ export default class Pacman extends Entity {
         if (cell === CellType.Food) {
             this.board.matrix[y][x] = CellType.Space
             this.board.foodCount -= 1
-            this.match.score += 10
+            this.match.addScore(10)
+            this.match.sfx.playEatFood(this.board.foodCount % 2 + 1)
         } else if (cell === CellType.BigFood){
             this.board.matrix[y][x] = CellType.Space
             this.board.foodCount -= 1
             ghosts.forEach(g => g.scare(8000))
+            this.match.ghostsEaten = 0
+            this.match.sfx.startScareSiren(8000)
         }
         
         return super.canMoveOn(cell) && cell != CellType.GhostHouse
@@ -73,7 +76,7 @@ export default class Pacman extends Entity {
         ctx.drawImage(img, this.x*cellSize, this.y*cellSize, cellSize, cellSize)
     }
 
-    lose(){
+    lose(animDuration: number){
         let rotateIntervalId = setInterval(() => {
             this.rotateClockwise()
         }, 200)
@@ -81,6 +84,6 @@ export default class Pacman extends Entity {
         setTimeout(() => {
             clearInterval(rotateIntervalId)
             this.reset()
-        }, 1700)
+        }, animDuration - 200)
     }
 }

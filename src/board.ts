@@ -7,6 +7,7 @@ export default class Board {
     foodCount: number
     foodRadius: number
     delta: number
+    tick: number
     wallColors: string[]
     matrix: CellType[][]
 
@@ -17,6 +18,7 @@ export default class Board {
         this.foodCount = 0
         this.foodRadius = foodRadius
         this.delta = wallOffset
+        this.tick = 0
         this.wallColors = ["blue", "purple", "orange"]
         this.matrix = []
     }
@@ -116,12 +118,14 @@ export default class Board {
 
     // ---- DRAWING METHODS ----------------------
 
-    draw(ctx: CanvasRenderingContext2D){
+    draw(ctx: CanvasRenderingContext2D, level: number, completed: boolean){
+        this.tick++
+        
         this.matrix.forEach((row, y) => {
             row.forEach((cell, x) => {
                 switch(cell){
                     case CellType.Wall:
-                        this.drawLightWall(ctx, x, y)
+                        this.drawLightWall(ctx, x, y, level, completed)
                         break
                     case CellType.Space:
                         ctx.fillStyle = "black"
@@ -142,8 +146,12 @@ export default class Board {
         })
     }
 
-    drawLightWall(context: CanvasRenderingContext2D, x: number, y: number){
-        context.strokeStyle = this.wallColors[0]
+    drawLightWall(context: CanvasRenderingContext2D, x: number, y: number, level: number, completed: boolean){
+        if (completed && this.tick % 16 < 8){
+            context.strokeStyle = "white"
+        } else {
+            context.strokeStyle = this.wallColors[(level-1) % 3]
+        }
 
         const wallType = CellType.Wall
         const wall_above = y == 0 || this.matrix[y-1][x] == wallType

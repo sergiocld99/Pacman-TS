@@ -50,7 +50,7 @@ const loop = () => {
     // clear screen and draw board
     if (canvasCtx){
         canvasCtx.clearRect(0,0,canvas.width, canvas.height)
-        board.draw(canvasCtx)
+        board.draw(canvasCtx, match.level, board.foodCount === 0)
         pacman.draw(canvasCtx, imgRepo)
 
         if (!match.isLosing()){
@@ -66,12 +66,13 @@ const loop = () => {
                 switch (g.status){
                     case GhostStatus.Normal:
                         // ghost kills pacman
-                        match.loseLive()
-                        pacman.lose()
+                        match.loseLive(2000)
+                        pacman.lose(2000)
                         ghosts.forEach(g => g.reset())
                         break
                     case GhostStatus.Vulnerable:
-                        g.eat()
+                        g.eat()    
+                        match.eatGhost(500)
                         break
                     case GhostStatus.Eaten:
                         break
@@ -80,6 +81,20 @@ const loop = () => {
         })
         
         pacman.moveAuto(ghosts)
+
+        if (board.foodCount === 0){
+            match.nextLevel()
+
+            setTimeout(() => {
+                board.build()
+                ghosts.forEach(g => g.reset())
+                pacman.reset()
+
+                match.level++
+                match.start()
+            }, 2000)
+        }
+
     } else {
 
     }

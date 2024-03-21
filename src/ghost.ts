@@ -59,6 +59,7 @@ export default class Ghost extends Entity {
         }
 
         super.nextTick()
+        this.drawTicks++
     }
 
     moveAuto() {
@@ -237,7 +238,6 @@ export default class Ghost extends Entity {
 
     draw(ctx: CanvasRenderingContext2D, imgSize: number, imgRepo: ImgRepo){
         if (this.status === GhostStatus.Vulnerable){
-            this.drawTicks++
             let variant = this.vulnerableEnding && (this.drawTicks % 10 < 5)
             const cellSize = this.board.cellSize
             ctx.drawImage(variant ? imgRepo.scared2Img : imgRepo.scaredImg, this.x * cellSize, this.y * cellSize, cellSize, cellSize)
