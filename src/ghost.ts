@@ -13,6 +13,7 @@ export default class Ghost extends Entity {
     vulnerableEnding: boolean
     vulnerableEndingIntervalId: number | null
     vulnerableEndTs: number
+    drawTicks: number
     status: GhostStatus
     board: Board
     pacman: Pacman
@@ -26,6 +27,7 @@ export default class Ghost extends Entity {
         this.vulnerableEnding = true
         this.vulnerableEndingIntervalId = null
         this.vulnerableEndTs = -1
+        this.drawTicks = 0
         this.status = GhostStatus.Normal
         this.board = board
         this.pacman = pacman
@@ -40,6 +42,7 @@ export default class Ghost extends Entity {
 
         if (this.vulnerableEndingIntervalId) clearInterval(this.vulnerableEndingIntervalId)
         this.vulnerableEndTs = -1
+        this.drawTicks = 0
     }
 
     moveIfTicks(tickPeriod: number){
@@ -157,23 +160,6 @@ export default class Ghost extends Entity {
         }
     }
 
-    canMoveTo(x:number,y:number): boolean{
-        const x_try = super.fixX(x)
-        const y_try = super.fixY(y)
-
-        // check tunnel
-        super.checkTunnel(this.board.width)
-
-        let ok = this.isValidCell(x_try, y_try)
-        if (!ok) this.bounces++
-        return ok
-    }
-
-    isValidCell(x: number, y: number): boolean {
-        const cell = this.board.matrix[y][x]
-        return super.canMoveOn(cell)
-    }
-
     rotateTowardsHouse(){
         switch (this.direction){
             case Direction.UP:
@@ -242,32 +228,21 @@ export default class Ghost extends Entity {
         if (!this.isGoingTowardsPacman()) this.goBackwards()
     }
 
-    isGoingTowardsPacman(): boolean {
-        switch(this.direction){
-            case Direction.UP:
-                return this.pacman.isAboveEntity(this)
-            case Direction.LEFT:
-                return this.pacman.isLeftToEntity(this)
-            case Direction.RIGHT:
-                return this.pacman.isRightToEntity(this)
-            case Direction.DOWN:
-                return this.pacman.isBelowEntity(this)
-        }
+    eat(){
+        this.status = GhostStatus.Eaten
+        this.goBackwards()
     }
 
     // ---- DRAWING METHODS ---------------
 
     draw(ctx: CanvasRenderingContext2D, imgSize: number, imgRepo: ImgRepo){
-        switch(this.status){
-            case GhostStatus.Normal:
-                this.drawNormal(ctx,imgSize,imgRepo)
-                break
-            case GhostStatus.Vulnerable:
-                let variant = this.vulnerableEnding && (this.tick % 2)
-                ctx.drawImage(variant ? imgRepo.scared2Img : imgRepo.scaredImg, this.x * this.board.cellSize, this.y * this.board.cellSize, this.board.cellSize, this.board.cellSize)
-                break
-            case GhostStatus.Eaten:
-                break
+        if (this.status === GhostStatus.Vulnerable){
+            this.drawTicks++
+            let variant = this.vulnerableEnding && (this.drawTicks % 10 < 5)
+            const cellSize = this.board.cellSize
+            ctx.drawImage(variant ? imgRepo.scared2Img : imgRepo.scaredImg, this.x * cellSize, this.y * cellSize, cellSize, cellSize)
+        } else {
+            this.drawNormal(ctx,imgSize,imgRepo)
         }
     }
 
@@ -297,10 +272,28 @@ export default class Ghost extends Entity {
                 break
         }
 
-        ctx.drawImage(imgRepo.ghostImgs[this.id], sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
+        let img = this.status === GhostStatus.Normal ? imgRepo.ghostImgs[this.id] : imgRepo.eyesImg
+        ctx.drawImage(img, sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
     }
 
-    // ---- COLLISION DETECTION -----------
+    // ---- BOOLEAN -----------
+
+    canMoveTo(x:number,y:number): boolean{
+        const x_try = super.fixX(x)
+        const y_try = super.fixY(y)
+
+        // check tunnel
+        super.checkTunnel(this.board.width)
+
+        let ok = this.isValidCell(x_try, y_try)
+        if (!ok) this.bounces++
+        return ok
+    }
+
+    isValidCell(x: number, y: number): boolean {
+        const cell = this.board.matrix[y][x]
+        return super.canMoveOn(cell)
+    }
 
     checkPacmanCollision(): boolean {
         switch(this.direction){
@@ -312,6 +305,19 @@ export default class Ghost extends Entity {
             case Direction.RIGHT:
                 if (this.y != this.pacman.y) return false
                 return this.x == this.pacman.x || this.fixedX() == this.pacman.x || this.x == this.pacman.fixedX()
+        }
+    }
+
+    isGoingTowardsPacman(): boolean {
+        switch(this.direction){
+            case Direction.UP:
+                return this.pacman.isAboveEntity(this)
+            case Direction.LEFT:
+                return this.pacman.isLeftToEntity(this)
+            case Direction.RIGHT:
+                return this.pacman.isRightToEntity(this)
+            case Direction.DOWN:
+                return this.pacman.isBelowEntity(this)
         }
     }
 }

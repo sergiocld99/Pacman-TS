@@ -71,6 +71,7 @@ const loop = () => {
                         ghosts.forEach(g => g.reset())
                         break
                     case GhostStatus.Vulnerable:
+                        g.eat()
                         break
                     case GhostStatus.Eaten:
                         break
