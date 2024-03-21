@@ -42,9 +42,11 @@ export default class Pacman extends Entity {
         } else if (cell === CellType.BigFood){
             this.board.matrix[y][x] = CellType.Space
             this.board.foodCount -= 1
-            ghosts.forEach(g => g.scare(8000))
+
+            const duration = this.match.getScareDuration()
+            ghosts.forEach(g => g.scare(duration))
+            this.match.sfx.startScareSiren(duration)
             this.match.ghostsEaten = 0
-            this.match.sfx.startScareSiren(8000)
         }
         
         return super.canMoveOn(cell) && cell != CellType.GhostHouse

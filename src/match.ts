@@ -51,6 +51,10 @@ export default class Match {
         return this.status === MatchStatus.Losing
     }
 
+    isEatingGhost(): boolean {
+        return this.status === MatchStatus.EatingGhost
+    }
+
     loseLive(animDuration: number) {
         this.status = MatchStatus.Losing
         this.sfx.sirenEnabled = false
@@ -70,7 +74,7 @@ export default class Match {
 
     eatGhost(animDuration: number){
         this.ghostsEaten++
-        this.addScore(Math.pow(2, this.ghostsEaten) * 100)
+        this.addScore(this.getPointsByGhostsEaten())
         this.status = MatchStatus.EatingGhost
         this.sfx.playEatGhost()
 
@@ -93,5 +97,15 @@ export default class Match {
         this.sfx.sirenEnabled = false
         this.sfx.ghostsVulnerable = false
         this.sfx.stopSiren()
+    }
+
+    // ---- CALCULATIONS ----------
+
+    getPointsByGhostsEaten(): number {
+        return Math.pow(2, this.ghostsEaten) * 100
+    }
+
+    getScareDuration(): number {
+        return 9300 * Math.max(1, 12-this.level+1) / 12
     }
 }

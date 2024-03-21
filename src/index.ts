@@ -95,8 +95,10 @@ const loop = () => {
             }, 2000)
         }
 
-    } else {
-
+    } else if (match.isEatingGhost() && canvasCtx) {
+        canvasCtx.font = "16px Arial"
+        canvasCtx.fillStyle = "cyan"
+        canvasCtx.fillText(`${match.getPointsByGhostsEaten()}`, (pacman.x - 0.2) * board.cellSize, (pacman.y - 0.6) * board.cellSize)
     }
 
     // imgs visibility
