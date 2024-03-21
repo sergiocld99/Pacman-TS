@@ -1,7 +1,7 @@
 import CellType from "./cellType.js"
 import Direction from "./direction.js"
 
-const Entity = class {
+export default class Entity {
     x: number
     y: number
     tick: number
@@ -147,6 +147,20 @@ const Entity = class {
                 break;
         }
     }
-}
 
-export default Entity
+    isAboveEntity(entity: Entity): boolean {
+        return this.isAbove(entity.y)
+    }
+
+    isBelowEntity(entity: Entity): boolean {
+        return this.isBelow(entity.y)
+    }
+
+    isLeftToEntity(entity: Entity): boolean {
+        return this.isToTheLeft(entity.x)
+    }
+
+    isRightToEntity(entity: Entity): boolean {
+        return this.isToTheRight(entity.x)
+    }
+}

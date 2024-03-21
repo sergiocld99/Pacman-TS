@@ -2,6 +2,7 @@ import Board from "./board.js";
 import CellType from "./cellType.js";
 import Direction from "./direction.js";
 import Entity from "./entity.js";
+import Ghost from "./ghost.js";
 import ImgRepo from "./imgRepo.js";
 import Match from "./match.js";
 
@@ -22,15 +23,15 @@ export default class Pacman extends Entity {
         this.movableTick = 0
     }
 
-    canMoveTo(x: number, y: number){
+    canMoveTo(x: number, y: number, ghosts: Ghost[]){
         super.checkTunnel(this.board.width)
 
-        let ok = this.isValidCell(super.fixX(x), super.fixY(y))
+        let ok = this.processCell(super.fixX(x), super.fixY(y), ghosts)
         if (ok) super.nextTick()
         return ok
     }
 
-    isValidCell(x: number, y: number): boolean {
+    processCell(x: number, y: number, ghosts: Ghost[]): boolean {
         let cell = this.board.matrix[y][x]
         
         if (cell === CellType.Food) {
@@ -40,27 +41,28 @@ export default class Pacman extends Entity {
         } else if (cell === CellType.BigFood){
             this.board.matrix[y][x] = CellType.Space
             this.board.foodCount -= 1
+            ghosts.forEach(g => g.scare(8000))
         }
         
         return super.canMoveOn(cell) && cell != CellType.GhostHouse
     }
 
-    moveAuto(){
+    moveAuto(ghosts: Ghost[]){
         if (++this.movableTick < 3) return
         this.movableTick = 0
 
         switch(this.direction){
             case Direction.UP:
-                if (this.canMoveTo(this.x, this.y-0.5)) super.moveUp()
+                if (this.canMoveTo(this.x, this.y-0.5, ghosts)) super.moveUp()
                 break
             case Direction.LEFT:
-                if (this.canMoveTo(this.x-0.5, this.y)) super.moveLeft()
+                if (this.canMoveTo(this.x-0.5, this.y, ghosts)) super.moveLeft()
                 break
             case Direction.RIGHT:
-                if (this.canMoveTo(this.x+0.5, this.y)) super.moveRight()
+                if (this.canMoveTo(this.x+0.5, this.y, ghosts)) super.moveRight()
                 break
             case Direction.DOWN:
-                if (this.canMoveTo(this.x, this.y+0.5)) super.moveDown()
+                if (this.canMoveTo(this.x, this.y+0.5, ghosts)) super.moveDown()
                 break
         }
     }

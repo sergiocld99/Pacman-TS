@@ -78,7 +78,7 @@ const loop = () => {
             }
         })
         
-        pacman.moveAuto()
+        pacman.moveAuto(ghosts)
     } else {
 
     }

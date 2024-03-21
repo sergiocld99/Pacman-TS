@@ -10,6 +10,9 @@ export default class Ghost extends Entity {
     bounces: number
     bounceLimit: number
     atHome: boolean
+    vulnerableEnding: boolean
+    vulnerableEndingIntervalId: number | null
+    vulnerableEndTs: number
     status: GhostStatus
     board: Board
     pacman: Pacman
@@ -20,6 +23,9 @@ export default class Ghost extends Entity {
         this.bounces = 0
         this.bounceLimit = 5 * (this.id + 1)
         this.atHome = true
+        this.vulnerableEnding = true
+        this.vulnerableEndingIntervalId = null
+        this.vulnerableEndTs = -1
         this.status = GhostStatus.Normal
         this.board = board
         this.pacman = pacman
@@ -29,7 +35,11 @@ export default class Ghost extends Entity {
         super.reset()
         this.bounces = 0
         this.atHome = true
+        this.vulnerableEnding = true
         this.status = GhostStatus.Normal
+
+        if (this.vulnerableEndingIntervalId) clearInterval(this.vulnerableEndingIntervalId)
+        this.vulnerableEndTs = -1
     }
 
     moveIfTicks(tickPeriod: number){
@@ -50,7 +60,9 @@ export default class Ghost extends Entity {
 
     moveAuto() {
         this.tick = 0
-        
+        if (this.status === GhostStatus.Vulnerable && this.vulnerableEndTs < Date.now())
+            this.unscare()
+
         switch(this.direction){
             case Direction.UP:
                 this.moveUp()
@@ -71,11 +83,11 @@ export default class Ghost extends Entity {
         if (this.y == 14 && (this.x == 6 || this.x == 21)){
             switch(this.status){
                 case GhostStatus.Normal:
-                    if (this.pacman.isBelow(this.y)) this.changeToRandomDirection()
+                    if (this.pacman.isBelowEntity(this)) this.changeToRandomDirection()
                     else super.moveUp()
                     break
                 case GhostStatus.Vulnerable:
-                    if (this.pacman.isAbove(this.y)) this.changeToRandomDirection()
+                    if (this.pacman.isAboveEntity(this)) this.changeToRandomDirection()
                     else super.moveUp()
                     break
                 case GhostStatus.Eaten:
@@ -126,11 +138,11 @@ export default class Ghost extends Entity {
         } else if (this.y == 14 && (this.x == 6 || this.x == 21)){
             switch(this.status){
                 case GhostStatus.Normal:
-                    if (this.pacman.isAbove(this.y)) this.changeToRandomDirection()
+                    if (this.pacman.isAboveEntity(this)) this.changeToRandomDirection()
                     else super.moveDown()
                     break
                 case GhostStatus.Vulnerable:
-                    if (this.pacman.isBelow(this.y)) this.changeToRandomDirection()
+                    if (this.pacman.isBelowEntity(this)) this.changeToRandomDirection()
                     else super.moveDown()
                     break
                 case GhostStatus.Eaten:
@@ -188,7 +200,7 @@ export default class Ghost extends Entity {
                     if (this.status === GhostStatus.Eaten) this.rotateTowardsHouse()
                     else if (Math.random() < 0.4) this.direction = Math.random() < 0.5 ? 1 : 2
                     else if (this.status == GhostStatus.Vulnerable) this.direction = this.pacman.isToTheLeft(this.x) ? 2 : 1
-                    else this.direction = this.pacman.isToTheLeft(this.x) ? 1 : 2
+                    else this.direction = this.pacman.isLeftToEntity(this) ? 1 : 2
                 } else if (op1) this.direction = 1
                 else if (op2) this.direction = 2
                 else this.goBackwards()
@@ -202,7 +214,7 @@ export default class Ghost extends Entity {
                     if (this.status === GhostStatus.Eaten) this.rotateTowardsHouse()
                     else if (Math.random() < 0.4) this.direction = Math.random() < 0.5 ? 0 : 3
                     else if (this.status === GhostStatus.Vulnerable) this.direction = this.pacman.isAbove(this.y) ? 3 : 0
-                    else this.direction = this.pacman.isAbove(this.y) ? 0 : 3
+                    else this.direction = this.pacman.isAboveEntity(this) ? 0 : 3
                 } else if (op1) this.direction = 0
                 else if (op2) this.direction = 3
                 else this.goBackwards()
@@ -210,23 +222,36 @@ export default class Ghost extends Entity {
         }
     }
 
+    scare(duration: number){
+        if (this.status === GhostStatus.Eaten) return
+        this.status = GhostStatus.Vulnerable
+        this.vulnerableEnding = false
+        if (this.isGoingTowardsPacman()) this.goBackwards()
+        this.tick = 0
+
+        if (this.vulnerableEndingIntervalId) clearInterval(this.vulnerableEndingIntervalId)
+        this.vulnerableEndingIntervalId = window.setTimeout(() => {
+            this.vulnerableEnding = true
+        }, duration * 0.8)
+
+        this.vulnerableEndTs = Date.now() + duration
+    }
+
     unscare(){
         this.status = GhostStatus.Normal
-        
-        // go towards pacman
-        switch (this.direction){
+        if (!this.isGoingTowardsPacman()) this.goBackwards()
+    }
+
+    isGoingTowardsPacman(): boolean {
+        switch(this.direction){
             case Direction.UP:
-                if (this.pacman.isBelow(this.y)) this.goBackwards()
-                break
+                return this.pacman.isAboveEntity(this)
             case Direction.LEFT:
-                if (this.pacman.isToTheRight(this.x)) this.goBackwards()
-                break
+                return this.pacman.isLeftToEntity(this)
             case Direction.RIGHT:
-                if (this.pacman.isToTheLeft(this.x)) this.goBackwards()
-                break
+                return this.pacman.isRightToEntity(this)
             case Direction.DOWN:
-                if (this.pacman.isAbove(this.y)) this.goBackwards()
-                break
+                return this.pacman.isBelowEntity(this)
         }
     }
 
@@ -238,6 +263,8 @@ export default class Ghost extends Entity {
                 this.drawNormal(ctx,imgSize,imgRepo)
                 break
             case GhostStatus.Vulnerable:
+                let variant = this.vulnerableEnding && (this.tick % 2)
+                ctx.drawImage(variant ? imgRepo.scared2Img : imgRepo.scaredImg, this.x * this.board.cellSize, this.y * this.board.cellSize, this.board.cellSize, this.board.cellSize)
                 break
             case GhostStatus.Eaten:
                 break
@@ -272,6 +299,8 @@ export default class Ghost extends Entity {
 
         ctx.drawImage(imgRepo.ghostImgs[this.id], sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
     }
+
+    // ---- COLLISION DETECTION -----------
 
     checkPacmanCollision(): boolean {
         switch(this.direction){
