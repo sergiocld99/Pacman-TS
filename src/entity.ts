@@ -5,13 +5,21 @@ const Entity = class {
     x: number
     y: number
     tick: number
+    startPos: [number, number, Direction]
     direction: Direction
 
     constructor(start: [number, number, Direction]) {
         this.x = start[0]
         this.y = start[1]
         this.tick = 0
+        this.startPos = start
         this.direction = start[2]
+    }
+
+    reset(){
+        this.x = this.startPos[0]
+        this.y = this.startPos[1]
+        this.direction = this.startPos[2]
     }
 
     nextTick() {
@@ -111,6 +119,33 @@ const Entity = class {
 
     canMoveOn(cellType: CellType): boolean {
         return cellType != CellType.Wall
+    }
+
+    fixedX(): number {
+        return this.fixX(this.x)
+    }
+
+    fixedY(): number {
+        return this.fixY(this.y)
+    }
+
+    rotateClockwise() {
+        this.tick = 0
+
+        switch (this.direction) {
+            case Direction.UP:
+                this.direction = Direction.RIGHT
+                break
+            case Direction.LEFT:
+                this.direction = Direction.UP
+                break
+            case Direction.RIGHT:
+                this.direction = Direction.DOWN
+                break
+            case Direction.DOWN:
+                this.direction = Direction.LEFT
+                break;
+        }
     }
 }
 

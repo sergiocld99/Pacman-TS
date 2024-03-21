@@ -3,8 +3,7 @@ import Direction from "./direction.js"
 import Board from "./board.js"
 import Pacman from "./pacman.js"
 import ImgRepo from "./imgRepo.js"
-
-const enum GhostStatus{ Normal, Vulnerable, Eaten }
+import GhostStatus from "./ghostStatus.js"
 
 export default class Ghost extends Entity {
     id: number
@@ -24,6 +23,13 @@ export default class Ghost extends Entity {
         this.status = GhostStatus.Normal
         this.board = board
         this.pacman = pacman
+    }
+
+    reset(){
+        super.reset()
+        this.bounces = 0
+        this.atHome = true
+        this.status = GhostStatus.Normal
     }
 
     moveIfTicks(tickPeriod: number){
@@ -265,6 +271,19 @@ export default class Ghost extends Entity {
         }
 
         ctx.drawImage(imgRepo.ghostImgs[this.id], sx, sy, sw, sh, this.x*cellSize, this.y*cellSize, cellSize*1.2, cellSize*1.2)
+    }
+
+    checkPacmanCollision(): boolean {
+        switch(this.direction){
+            case Direction.UP:
+            case Direction.DOWN:
+                if (this.x != this.pacman.x) return false
+                return this.y == this.pacman.y || this.fixedY() == this.pacman.y || this.y == this.pacman.fixedY()                 
+            case Direction.LEFT:
+            case Direction.RIGHT:
+                if (this.y != this.pacman.y) return false
+                return this.x == this.pacman.x || this.fixedX() == this.pacman.x || this.x == this.pacman.fixedX()
+        }
     }
 }
 

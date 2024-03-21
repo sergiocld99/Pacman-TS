@@ -3,6 +3,7 @@ import Board from "./board.js"
 import CellType from "./cellType.js"
 import Direction from "./direction.js"
 import Ghost from "./ghost.js"
+import GhostStatus from "./ghostStatus.js"
 import ImgRepo from "./imgRepo.js"
 import Match from "./match.js"
 import Pacman from "./pacman.js"
@@ -50,12 +51,33 @@ const loop = () => {
     if (canvasCtx){
         canvasCtx.clearRect(0,0,canvas.width, canvas.height)
         board.draw(canvasCtx)
-        ghosts.forEach((g, i) => g.draw(canvasCtx, 100, imgRepo))
         pacman.draw(canvasCtx, imgRepo)
+
+        if (!match.isLosing()){
+            ghosts.forEach(g => g.draw(canvasCtx, 100, imgRepo))
+        }
     }
 
     if (match.isPlaying()){
-        ghosts.forEach(g => g.moveIfTicks(3))
+        ghosts.forEach(g => {
+            g.moveIfTicks(3)
+
+            if (g.checkPacmanCollision()){
+                switch (g.status){
+                    case GhostStatus.Normal:
+                        // ghost kills pacman
+                        match.loseLive()
+                        pacman.lose()
+                        ghosts.forEach(g => g.reset())
+                        break
+                    case GhostStatus.Vulnerable:
+                        break
+                    case GhostStatus.Eaten:
+                        break
+                }
+            }
+        })
+        
         pacman.moveAuto()
     } else {
 
@@ -63,7 +85,7 @@ const loop = () => {
 
     // imgs visibility
     imgRepo.liveImgs.forEach((img, i) => {
-        
+        img.style.visibility = match.lives > i ? 'visible' : 'hidden'
     })
 
     levelTxt.innerText = "Level " + match.level

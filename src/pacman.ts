@@ -17,6 +17,11 @@ export default class Pacman extends Entity {
         this.movableTick = 0
     }
 
+    reset(){
+        super.reset()
+        this.movableTick = 0
+    }
+
     canMoveTo(x: number, y: number){
         super.checkTunnel(this.board.width)
 
@@ -64,5 +69,16 @@ export default class Pacman extends Entity {
         const cellSize = this.board.cellSize
         let img = this.tick % 2 ? imgRepo.pacmanClosedImg : imgRepo.pacmanImgs[this.direction]
         ctx.drawImage(img, this.x*cellSize, this.y*cellSize, cellSize, cellSize)
+    }
+
+    lose(){
+        let rotateIntervalId = setInterval(() => {
+            this.rotateClockwise()
+        }, 200)
+
+        setTimeout(() => {
+            clearInterval(rotateIntervalId)
+            this.reset()
+        }, 1700)
     }
 }

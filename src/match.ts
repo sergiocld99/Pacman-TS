@@ -55,4 +55,25 @@ export default class Match {
     isPlaying () : boolean {
         return this.status === MatchStatus.Playing
     }
+
+    isLosing() : boolean {
+        return this.status === MatchStatus.Losing
+    }
+
+    loseLive() {
+        this.status = MatchStatus.Losing
+
+        let sound = new Audio("sounds/lose.mp3")
+        sound.volume = 0.5
+        sound.play()
+
+        setTimeout(() => {
+            this.lives--
+
+            if (this.lives >= 0) {
+                this.status = MatchStatus.Playing
+                //this.startGhostSiren()
+            }
+        }, 2000)
+    }
 }
