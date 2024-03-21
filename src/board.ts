@@ -135,7 +135,7 @@ export default class Board {
                         this.drawCircle(ctx, x,y,this.foodRadius)
                         break
                     case CellType.BigFood:
-                        this.drawCircle(ctx,x,y,this.foodRadius*2)
+                        if (this.tick % 16 < 8) this.drawCircle(ctx,x,y,this.foodRadius*2)
                         break
                     case CellType.GhostHouse:
                         ctx.fillStyle = "#110"
